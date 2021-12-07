@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "patterns": {
+      "type": "array",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}
