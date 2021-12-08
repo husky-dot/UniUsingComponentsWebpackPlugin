@@ -1,11 +1,11 @@
-### uni-using-components-webpack-plugin
+# uni-using-components-webpack-plugin
 
 配合 UniApp，用于集成小程序原生组件，解决两个问题：
 
 -   配置第三方库后可以自动引入其下的原生组件，而无需手动配置
 -   生产构建时可以自动剔除没有使用到的原生组件
 
-### 使用
+# 使用
 
 安装
 
@@ -38,7 +38,7 @@ module.exports = {
 
 > **注意：uni-using-components-webpack-plugin 只适用在 UniApp 开发的小程序。**
 
-### 参数
+# 参数
 
 | Name     | Type            | **Description** |
 | -------- | --------------- | --------------- |
@@ -55,7 +55,7 @@ module.exports = {
 **prefix** 是指组件的前缀，如 Vant 使用是 `van` 开头的前缀，iview 使用是 `i` 开头的前缀，具体可看它们各自的官方文档。
 
 
-### 背景介绍
+# 背景介绍
 
 #### 第一个痛点
 
@@ -88,6 +88,6 @@ module.exports = {
 * 生产构建时可以自动剔除没有使用到的原生组件 
 
 
-## License
+# License
 
 [MIT](http://opensource.org/licenses/MIT)
