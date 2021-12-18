@@ -75,6 +75,15 @@ class UniUsingComponentsWebpackPlugin {
       );
       if (fs.pathExistsSync(pagesJsonPath)) {
         const pagesJson = JSON.parse(fs.readFileSync(pagesJsonPath, 'utf8'));
+        this.options.patterns.map((pattern) => {
+          const reg = new RegExp(`(${pattern.prefix}-[a-z]+)`)
+          Object.keys(pagesJson.globalStyle.usingComponents).forEach((item) => {
+            if (reg.test(item)) {
+              delete pagesJson.globalStyle.usingComponents[item]
+            }
+          })
+        })
+
         results.forEach((item) => {
           Object.entries(item.usingComponents).forEach(([useKey, useValue]) => {
             pagesJson.globalStyle.usingComponents[useKey] = useValue;
