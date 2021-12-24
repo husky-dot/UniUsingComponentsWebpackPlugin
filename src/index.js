@@ -3,6 +3,10 @@ const globby = require('globby');
 const fs = require('fs-extra');
 const { validate } = require('schema-utils');
 const { RawSource } = require('webpack-sources');
+const {
+  parse,
+  stringify,
+} = require('comment-json')
 const schema = require('./schema.json');
 
 // https://webpack.docschina.org/api/compiler-hooks/#make
@@ -29,7 +33,7 @@ class UniUsingComponentsWebpackPlugin {
       `node_modules/${pattern.module}/package.json`
     );
     if (fs.pathExists(nodeModulesPath)) {
-      const nodeModulesJson = JSON.parse(
+      const nodeModulesJson = parse(
         fs.readFileSync(nodeModulesPath) || {}
       );
 
@@ -74,7 +78,7 @@ class UniUsingComponentsWebpackPlugin {
         })
       );
       if (fs.pathExistsSync(pagesJsonPath)) {
-        const pagesJson = JSON.parse(fs.readFileSync(pagesJsonPath, 'utf8'));
+        const pagesJson = parse(fs.readFileSync(pagesJsonPath, 'utf8'));
         this.options.patterns.map((pattern) => {
           const reg = new RegExp(`(${pattern.prefix}-[a-z]+)`)
           Object.keys(pagesJson.globalStyle.usingComponents).forEach((item) => {
@@ -89,7 +93,7 @@ class UniUsingComponentsWebpackPlugin {
             pagesJson.globalStyle.usingComponents[useKey] = useValue;
           });
         });
-        fs.writeFileSync(pagesJsonPath, JSON.stringify(pagesJson, null, '\t'));
+        fs.writeFileSync(pagesJsonPath, stringify(pagesJson, null, '\t'));
       }
     } catch (err) {
       console.log(err);
@@ -242,7 +246,7 @@ class UniUsingComponentsWebpackPlugin {
       appJson.usingComponents = appUsingComponents;
       fs.writeFileSync(
         path.resolve(path.resolve(context, 'app.json')),
-        JSON.stringify(appJson, undefined, 2),
+        stringify(appJson, undefined, 2),
         {
           encoding: 'utf-8',
         }
