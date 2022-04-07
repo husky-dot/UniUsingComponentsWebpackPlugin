@@ -42,50 +42,73 @@ class UniUsingComponentsWebpackPlugin {
   }
 
   /**
+   *  判断是否有指定前缀
+   * @returns boolean
+   */
+  hasPrefixes() {
+    const hasPrefixes = this.options.patterns.filter((item) => {
+      if ('prefix' in item && item.prefix) {
+        return true
+      }
+      return false
+    })
+    if (hasPrefixes && hasPrefixes.length <= 0) {
+      return false
+    }
+    return true
+  }
+
+  /**
    * 自动引入其下的原生组件
    * @param {*} compiler
    */
   async writeUsingComponents(compiler) {
     try {
+      // 如果都没有指定前缀，说明我只想把对应的库拷贝至 wxcomponents，不需要其它操作
+      if (!this.hasPrefixes()) return
       const context = compiler.options.context // process.cwd()
       const appJsonPath = `./dist/${
         process.env.NODE_ENV === 'production' ? 'build' : 'dev'
       }/mp-weixin`
       const pagesJsonPath = path.resolve(appJsonPath, 'app.json')
       const results = await Promise.all(
-        this.options.patterns.map(async (pattern) => {
-          const usingComponents = {}
-          const libPath = this.getLibPath(context, pattern)
-          const paths = await globby([libPath], {})
-          const dirs = fs.readdirSync(libPath)
-          paths.forEach((file) => {
-            if (path.extname(file) === '.json') {
-              // 是小程序组件
-              const fileSplitChunk = file.split('/')
-              const comName = fileSplitChunk[fileSplitChunk.length - 2]
-              if (dirs.includes(comName)) {
-                const useValue = `/wxcomponents/${pattern.module}/${comName}/index`
-                const useKey = `${pattern.prefix}-${comName}`
-                usingComponents[useKey] = useValue
+        this.options.patterns
+          .filter((item) => !!item.prefix)
+          .map(async (pattern) => {
+            const usingComponents = {}
+            const libPath = this.getLibPath(context, pattern)
+            const paths = await globby([libPath], {})
+            const dirs = fs.readdirSync(libPath)
+            paths.forEach((file) => {
+              if (path.extname(file) === '.json') {
+                // 是小程序组件
+                const fileSplitChunk = file.split('/')
+                const comName = fileSplitChunk[fileSplitChunk.length - 2]
+                if (dirs.includes(comName)) {
+                  const useValue = `/wxcomponents/${pattern.module}/${comName}/index`
+                  const useKey = `${pattern.prefix}-${comName}`
+                  usingComponents[useKey] = useValue
+                }
               }
+            })
+            return {
+              usingComponents,
             }
           })
-          return {
-            usingComponents,
-          }
-        })
       )
 
       if (fs.pathExistsSync(pagesJsonPath)) {
         const pagesJson = parse(fs.readFileSync(pagesJsonPath, 'utf8'))
-        this.options.patterns.map((pattern) => {
-          const reg = new RegExp(`(${pattern.prefix}-[a-z]+)`)
-          Object.keys(pagesJson.usingComponents).forEach((item) => {
-            if (reg.test(item)) {
-              delete pagesJson.usingComponents[item]
-            }
+        this.options.patterns
+          .filter((item) => !!item.prefix)
+          .forEach((pattern) => {
+            const reg = new RegExp(`(${pattern.prefix}-[a-z]+)`)
+            Object.keys(pagesJson.usingComponents).forEach((item) => {
+              if (reg.test(item)) {
+                delete pagesJson.usingComponents[item]
+              }
+            })
           })
-        })
         results.forEach((item) => {
           Object.entries(item.usingComponents).forEach(([useKey, useValue]) => {
             pagesJson.usingComponents[useKey] = useValue
@@ -151,6 +174,8 @@ class UniUsingComponentsWebpackPlugin {
    */
   async deleteNoUseComponents() {
     try {
+      // 如果都没有指定前缀，说明我只想把对应的库拷贝至 wxcomponents，不需要其它操作
+      if (!this.hasPrefixes()) return
       const context = `./dist/${
         process.env.NODE_ENV === 'production' ? 'build' : 'dev'
       }/mp-weixin`
@@ -159,7 +184,10 @@ class UniUsingComponentsWebpackPlugin {
       )
       const appJson = fs.readJsonSync(path.resolve(context, 'app.json'))
       const appUsingComponents = appJson.usingComponents || {}
-      const prefixes = this.options.patterns.map((item) => item.prefix) || []
+      const prefixes =
+        this.options.patterns
+          .filter((item) => !!item.prefix)
+          .map((item) => item.prefix) || []
       const patterns = prefixes.map(
         (item) => new RegExp(`<(${item}-[a-z-]+)`, 'g')
       )
